@@ -45,8 +45,13 @@ target_link_libraries(raytracer PRIVATE visualisation)
 
 source_group(TREE ${CMAKE_SOURCE_DIR} FILES ${SOURCE_FILES} ${HEADER_FILES})
 
+#target_compile_options(raytracer PRIVATE "$<$<AND:$<COMPILE_LANGUAGE:CUDA>,$<CONFIG:RELEASE>>:-dlto>")
+#set(CMAKE_CUDA_FLAGS "-dlto -arch=sm_52")
+#target_compile_options(raytracer PRIVATE "$<$<AND:$<COMPILE_LANGUAGE:CUDA>,$<CONFIG:RELEASE>>:-gencode=arch=compute_52,code=[compute_52,lto_52]>")
 target_compile_options(raytracer PRIVATE "$<$<AND:$<COMPILE_LANGUAGE:CUDA>,$<CONFIG:DEBUG>>:-G>")
 target_compile_features(raytracer PRIVATE cxx_std_17)
+
+target_link_options(raytracer PRIVATE "LINKER:-dlto")
 
 if (GUI)
 target_compile_definitions(raytracer PRIVATE GUI_PLATFORM)

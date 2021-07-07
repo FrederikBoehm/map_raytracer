@@ -9,6 +9,8 @@
 
 #include "sampling/sampler.hpp"
 
+#include "utility/performance_monitoring.hpp"
+
 namespace rt {
   __global__ void init(CSampler* sampler) {
     sampler->init();
@@ -139,13 +141,15 @@ namespace rt {
 
   SFrame Raytracer::renderFrame() {
     // TODO: Measure execution time
-    cudaDeviceSynchronize();
+    //CPerformanceMonitoring::startMeasurement("renderFrame (Method)");
     CDeviceScene* scene = m_scene.deviceScene();
     dim3 grid(m_frameWidth, m_frameHeight);
     for (uint16_t sample = 0; sample < m_numSamples; ++sample) {
       std::cout << "Sample " << sample + 1 << "/" << m_numSamples << std::endl;
+      //CPerformanceMonitoring::startMeasurement("renderFrame");
       rt::renderFrame << <grid, 1 >> > (scene, m_deviceCamera, m_deviceSampler, m_numSamples, m_deviceFrame);
-      cudaError_t error = cudaDeviceSynchronize();
+      cudaDeviceSynchronize();
+      //CPerformanceMonitoring::endMeasurement("renderFrame");
     }
     rt::applyTonemapping << <grid, 1 >> > (m_deviceFrame, m_tonemappingFactor);
     cudaDeviceSynchronize();
@@ -157,6 +161,7 @@ namespace rt {
     cudaDeviceSynchronize();
 
     SFrame frame = retrieveFrame();
+    //CPerformanceMonitoring::endMeasurement("renderFrame (Method)");
     return frame;
   }
 
@@ -192,7 +197,10 @@ namespace rt {
   }
 
   void Raytracer::initDeviceData() {
+    //CPerformanceMonitoring::startMeasurement("init");
     init << <1, 1 >> > (m_deviceSampler);
+    cudaDeviceSynchronize();
+    //CPerformanceMonitoring::endMeasurement("init");
   }
 
   void Raytracer::freeDeviceMemory() {
